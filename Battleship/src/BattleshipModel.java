@@ -1,9 +1,47 @@
 //Dylan Williams
-//i dont like the way i have the update ships and ship status implemented
+//i dont like the way i have the ship status implemented
 //but i couldn't think of a better way to keep the information as it's needed
 //to display what ships are still good during the match as per the instructions
 
 public class BattleshipModel {
+	//private class ship to consolidate some of the code
+	private class Ship {
+		//the first dimension is each spot on the ship, the second dimension holds
+		//the location and status
+		private String[][] shipInfo;
+		private int maxHealth;
+		private int currentHealth;
+		
+		Ship(int max) {
+			//initializes the ship based off the max health given
+			maxHealth = max;
+			currentHealth = max;
+			shipInfo = new String[max][2];
+		}
+		
+		//places the specific ship given in the spots provided
+		public void PlaceSpecificShip(String[] t) {
+			for (int i = 0; i < maxHealth; i++) {
+				shipInfo[i][0] = t[i];
+			}
+		}
+		
+		//updates the ship if it was shot at
+		public void UpdateShip(int t) {
+			for (int i = 0; i < maxHealth; i++) {
+				if (myBoard[t][0].equals(shipInfo[i][0])) {
+					shipInfo[i][1] = "HIT";
+					currentHealth--;
+				}
+			}
+		}
+		
+		//return the status of the ship
+		public int GetStatus() {
+			return currentHealth;
+		}
+	}
+	
 	//first dimension is the spot on the board, ex. A1, B2, etc
 	//second dimension has the name of the spot on the board ex. A1 in slot [0]
 	//and the status of that spot in slot [1]. possible status include
@@ -12,21 +50,13 @@ public class BattleshipModel {
 	private String[][] myBoard;
 	
 	//first dimension is for each section of the ship, second dimension holds spot name and status of that spot
-	private String[][] carrierShip;
-	private String[][] battleshipShip;
-	private String[][] cruiserShip;
-	private String[][] submarineShip;
-	private String[][] destroyerShip;
+	private Ship carrierShip;
+	private Ship battleshipShip;
+	private Ship cruiserShip;
+	private Ship submarineShip;
+	private Ship destroyerShip;
 	
-	//keeps track of if the entire ship has sunk or not
-	private int carrierStatus;
-	private int battleshipStatus;
-	private int cruiserStatus;
-	private int submarineStatus;
-	private int destroyerStatus;
-	
-	//keeps track of total amount of hits to check for a winner
-	private int myTotalHits;
+	//keeps track of total amount of hits to check if you lost
 	private int oppTotalHits;
 	
 	//default constructor
@@ -44,21 +74,14 @@ public class BattleshipModel {
             }
         }
         
-        //initialize a lot of variables
-		carrierShip = new String[5][2];
-		battleshipShip = new String[4][2];
-		cruiserShip = new String[3][2];
-		submarineShip = new String[3][2];
-		destroyerShip = new String[2][2];
-		
-		//when the status is 0 the ship has been sunk
-		carrierStatus = 5;
-		battleshipStatus = 4;
-		cruiserStatus = 3;
-		submarineStatus = 3;
-		destroyerStatus = 2;
+        //initialize all the ships
+		carrierShip = new Ship(5);
+		battleshipShip = new Ship(4);
+		cruiserShip = new Ship(3);
+		submarineShip = new Ship(3);
+		destroyerShip = new Ship(2);
         
-        myTotalHits = 0;
+		//if this number hits 17 it means all your ships are destroyed
         oppTotalHits = 0;
 	}
 	
@@ -69,14 +92,6 @@ public class BattleshipModel {
 		}
 	}
 
-	//still not to sure about this method honestly
-	//i dont think its even necessary but keeping it here for now. just in case.
-	public void FireShot(String location) {
-		int index = TranslateBoardLocation(location);
-		//send it over the network
-		//process data received
-	}
-	
 	//will take the name of a spot such as A6 and return the index associated with it on the board
 	public int TranslateBoardLocation(String location) {
 		for (int i = 0; i < 100; i++) {
@@ -95,15 +110,15 @@ public class BattleshipModel {
 		if (myBoard[t][1] == "INTACT") {
 			myBoard[t][1] = "HIT";
 			oppTotalHits++;
-			UpdateCarrierShip(t);
-			UpdateBattleshipShip(t);
-			UpdateCruiserShip(t);
-			UpdateSubmarineShip(t);
-			UpdateDestroyerShip(t);
+			carrierShip.UpdateShip(t);
+			battleshipShip.UpdateShip(t);
+			cruiserShip.UpdateShip(t);
+			submarineShip.UpdateShip(t);
+			destroyerShip.UpdateShip(t);
 			return "HIT";
 		}
 		//if the spot has already been shot, it will not allow the user to shoot at it again
-		else if (myBoard[t][1] == "SUNK" || myBoard[t][1] == "MISS") {
+		else if (myBoard[t][1] == "SUNK" || myBoard[t][1] == "MISS" || myBoard[t][1] == "HIT") {
 			return "DUPE";
 		}
 		//else if theres no ship there it's just a miss
@@ -115,131 +130,63 @@ public class BattleshipModel {
 	
 	//update carrier to have the locations marked
 	public void PlaceCarrierShip(String[] t) {
-		for (int i = 0; i < 5; i++) {
-			carrierShip[i][0] = t[i];
-		}
+		carrierShip.PlaceSpecificShip(t);
 		PlaceShip(t);
-	}
-	
-	//goes through the spots of the ship, checks if the location of the shot matches any of the locations
-	//of the ship, and keeps track of how many hits the ship has taken, updating the status as needed
-	public void UpdateCarrierShip(int t) {
-		for (int i = 0; i < 5; i++) {
-			if (myBoard[t][0].equals(carrierShip[i][0])) {
-				carrierShip[i][1] = "HIT";
-				carrierStatus--;
-			}
-		}
-	}
-	
-	//return the status of the ship
-	public int GetCarrierStatus() {
-		return carrierStatus;
 	}
 	
 	//update battleship to have the locations marked
 	public void PlaceBattleshipShip(String[] t) {
-		for (int i = 0; i < 4; i++) {
-			battleshipShip[i][0] = t[i];
-		}
+		battleshipShip.PlaceSpecificShip(t);
 		PlaceShip(t);
 	}
-	
-	//goes through the spots of the ship, checks if the location of the shot matches any of the locations
-	//of the ship, and keeps track of how many hits the ship has taken, updating the status as needed
-	public void UpdateBattleshipShip(int t) {
-		for (int i = 0; i < 4; i++) {
-			if (myBoard[t][0].equals(battleshipShip[i][0])) {
-				battleshipShip[i][1] = "HIT";
-				battleshipStatus--;
-			}
-		}
-	}
-	
-	//return battleship status
-	public int GetBattleshipStatus() {
-		return battleshipStatus;
-	}
-	
+
 	//update cruiser to have the locations marked
 	public void PlaceCruiserShip(String[] t) {
-		for (int i = 0; i < 3; i++) {
-			cruiserShip[i][0] = t[i];
-		}
+		cruiserShip.PlaceSpecificShip(t);
 		PlaceShip(t);
-	}
-	
-	//goes through the spots of the ship, checks if the location of the shot matches any of the locations
-	//of the ship, and keeps track of how many hits the ship has taken, updating the status as needed
-	public void UpdateCruiserShip(int t) {
-		for (int i = 0; i < 3; i++) {
-			if (myBoard[t][0].equals(cruiserShip[i][0])) {
-				cruiserShip[i][1] = "HIT";
-				cruiserStatus--;
-			}
-		}
-	}
-	
-	//return cruiser status
-	public int GetCruiserStatus() {
-		return cruiserStatus;
 	}
 	
 	//update submarine to have the locations marked
 	public void PlaceSubmarineShip(String[] t) {
-		for (int i = 0; i < 3; i++) {
-			submarineShip[i][0] = t[i];
-		}
+		submarineShip.PlaceSpecificShip(t);
 		PlaceShip(t);
-	}
-	
-	//goes through the spots of the ship, checks if the location of the shot matches any of the locations
-	//of the ship, and keeps track of how many hits the ship has taken, updating the status as needed
-	public void UpdateSubmarineShip(int t) {
-		for (int i = 0; i < 3; i++) {
-			if (myBoard[t][0].equals(submarineShip[i][0])) {
-				submarineShip[i][1] = "HIT";
-				submarineStatus--;
-			}
-		}
-	}
-	
-	//return submarine status
-	public int GetSubmarineStatus() {
-		return submarineStatus;
 	}
 	
 	//update destroyer to have the locations marked
 	public void PlaceDestroyerShip(String[] t) {
-		for (int i = 0; i < 2; i++) {
-			destroyerShip[i][0] = t[i];
-		}
+		destroyerShip.PlaceSpecificShip(t);
 		PlaceShip(t);
 	}
 	
-	//goes through the spots of the ship, checks if the location of the shot matches any of the locations
-	//of the ship, and keeps track of how many hits the ship has taken, updating the status as needed
-	public void UpdateDestroyerShip(int t) {
-		for (int i = 0; i < 2; i++) {
-			if (myBoard[t][0].equals(destroyerShip[i][0])) {
-				destroyerShip[i][1] = "HIT";
-				destroyerStatus--;
-			}
-		}
+	//return the status of the carrier ship
+	public int GetCarrierStatus() {
+		return carrierShip.GetStatus();
 	}
 	
-	//return destroyer status
+	//return the status of the battleship ship
+	public int GetBattleshipStatus() {
+		return battleshipShip.GetStatus();
+	}
+	
+	//return the status of the cruiser ship
+	public int GetCruiserStatus() {
+		return cruiserShip.GetStatus();
+	}
+	
+	//return the status of the submarine ship
+	public int GetSubmarineStatus() {
+		return submarineShip.GetStatus();
+	}
+	
+	//return the status of the destroyer ship
 	public int GetDestroyerStatus() {
-		return destroyerStatus;
+		return destroyerShip.GetStatus();
 	}
 	
 	//checks to see if there is a winner or not
     public String checkWinner()
     {
-    	if (myTotalHits >= 17) {
-    		return "YOU WIN";
-    	}
-    	else if (oppTotalHits >= 17) {
+    	if (oppTotalHits >= 17) {
     		return "YOU LOST";
     	}
     	else {
