@@ -11,12 +11,14 @@ public class BattleshipModel {
 		private String[][] shipInfo;
 		private int maxHealth;
 		private int currentHealth;
+		private Boolean placed;
 		
 		Ship(int max) {
 			//initializes the ship based off the max health given
 			maxHealth = max;
 			currentHealth = max;
 			shipInfo = new String[max][2];
+			placed = false;
 		}
 		
 		//places the specific ship given in the spots provided
@@ -24,6 +26,7 @@ public class BattleshipModel {
 			for (int i = 0; i < maxHealth; i++) {
 				shipInfo[i][0] = t[i];
 			}
+			setPlaced();
 		}
 		
 		//updates the ship if it was shot at
@@ -39,6 +42,14 @@ public class BattleshipModel {
 		//return the status of the ship
 		public int GetStatus() {
 			return currentHealth;
+		}
+		
+		public void setPlaced() {
+			placed = true;
+		}
+		
+		public boolean getPlacementStatus() {
+			return placed;
 		}
 	}
 	
@@ -181,6 +192,33 @@ public class BattleshipModel {
 	//return the status of the destroyer ship
 	public int GetDestroyerStatus() {
 		return destroyerShip.GetStatus();
+	}
+	
+	public boolean GetShipPlacementStatus(String str) {
+		if (str.equals("Carrier")) {
+			return carrierShip.getPlacementStatus();
+		}
+		else if (str.equals("Battleship")) {
+			return battleshipShip.getPlacementStatus();
+		}
+		else if (str.equals("Cruiser")) {
+			return cruiserShip.getPlacementStatus();
+		}
+		else if (str.equals("Submarine")) {
+			return submarineShip.getPlacementStatus();
+		}
+		else {
+			return destroyerShip.getPlacementStatus();
+		}
+	}
+	
+	public boolean checkSpot(String str) {
+		if (myBoard[TranslateBoardLocation(str)][1] == "NO SHIP") {
+			return false;
+		}
+		else {
+			return true;
+		}
 	}
 	
 	//checks to see if there is a winner or not

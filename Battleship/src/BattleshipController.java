@@ -4,7 +4,7 @@ public class BattleshipController {
 
 	public static void main(String[] args) {
 
-    BattleshipModel gameModel = new BattleshipModel();
+		BattleshipModel gameModel = new BattleshipModel();
 		BattleshipView gameView = new BattleshipView(gameModel);
 		
 		
