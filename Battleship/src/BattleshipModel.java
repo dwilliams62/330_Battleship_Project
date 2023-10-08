@@ -44,10 +44,13 @@ public class BattleshipModel {
 			return currentHealth;
 		}
 		
+		//set that the ship has been placed
 		public void setPlaced() {
 			placed = true;
 		}
 		
+		//return the current status of the ship for use with the view
+		//mainly for the auto button to check if the ship is placed before attempting to place it
 		public boolean getPlacementStatus() {
 			return placed;
 		}
@@ -194,6 +197,9 @@ public class BattleshipModel {
 		return destroyerShip.GetStatus();
 	}
 	
+	//place the ship in the spots given in the string array
+	//this large if statement is more ideal than 5 functions and the others
+	//will be changed to this implementation in the final version
 	public boolean GetShipPlacementStatus(String str) {
 		if (str.equals("Carrier")) {
 			return carrierShip.getPlacementStatus();
@@ -212,6 +218,8 @@ public class BattleshipModel {
 		}
 	}
 	
+	//a function to be used in the future if the automatic placement function
+	//has time to be improved
 	public boolean checkSpot(String str) {
 		if (myBoard[TranslateBoardLocation(str)][1] == "NO SHIP") {
 			return false;

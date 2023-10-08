@@ -27,27 +27,34 @@ public class BattleshipView extends JFrame{
 	private BattleshipModel model; // using model
 	ImageIcon buttonIcon = new ImageIcon("Wave2.png"); // importing image
 	
+	private static int GRIDLAYOUTSIZE = 30; //used in grid layout size
+	private static int BOARDSIZE = 10; //constant for board size
+	
 	//constructor
 	BattleshipView(BattleshipModel gameModel){
 		super("BattleShip Game"); // title bar
 		
-		setLayout(new GridLayout(30,30)); // grid layout is 30 by 30
+		setLayout(new GridLayout(GRIDLAYOUTSIZE,GRIDLAYOUTSIZE)); // grid layout is 30 by 30
 		
-		enemyBoard = new JButton[10][10]; // 100 buttons for enemy board ( 10 * 10)
+		enemyBoard = new JButton[BOARDSIZE][BOARDSIZE]; // 100 buttons for enemy board ( 10 * 10)
 		EnemyButtonHandler enemyHandler = new EnemyButtonHandler(); // button handler
+		
+		//two temporary variables to set the text of each button
 		char letter = 'A';
 		int number = 1;
-		for(int i = 0; i < 10; i++) {
-			for (int j = 0; j < 10; j++) {
-				enemyBoard[i][j] = new JButton(buttonIcon); 
-				enemyBoard[i][j].setEnabled(true);
-				enemyBoard[i][j].setText(letter + Integer.toString(number));
-				enemyBoard[i][j].setHorizontalTextPosition(JButton.CENTER);
-				enemyBoard[i][j].setVerticalTextPosition(JButton.CENTER);
-				enemyBoard[i][j].setMargin(new Insets(0,0,0,0));
+		
+		//loops through all the enemy board buttons, setting the settings as necessary
+		for(int i = 0; i < BOARDSIZE; i++) {
+			for (int j = 0; j < BOARDSIZE; j++) {
+				enemyBoard[i][j] = new JButton(buttonIcon); //sets background picture as wave
+				enemyBoard[i][j].setEnabled(false); //dont allow press till ships placed
+				enemyBoard[i][j].setText(letter + Integer.toString(number)); //sets the text
+				enemyBoard[i][j].setHorizontalTextPosition(JButton.CENTER); //centers the text
+				enemyBoard[i][j].setVerticalTextPosition(JButton.CENTER); //centers the text
+				enemyBoard[i][j].setMargin(new Insets(0,0,0,0)); //allows image to fill entire button
 				
-				add(enemyBoard[i][j]);
-				enemyBoard[i][j].addActionListener(enemyHandler);
+				add(enemyBoard[i][j]); //add button to the grid layout
+				enemyBoard[i][j].addActionListener(enemyHandler); //attach a listener
 				number++;
 			}
 			letter++;
@@ -55,43 +62,41 @@ public class BattleshipView extends JFrame{
 		}
 		
 		AutoButtonHandler autoHandler = new AutoButtonHandler(); // This is for automatic placement
-		gap = new JPanel[10][10]; // 100 element space
-		for(int i = 0; i < 10; i++) {
-			for (int j = 0; j < 10; j++) {
-				gap[i][j] = new JPanel();
+		gap = new JPanel[BOARDSIZE][BOARDSIZE]; // 100 element space
+		
+		//loops through 100 spots to create a gap between the boards
+		//eventually the ships for drag and drop will be here
+		for(int i = 0; i < BOARDSIZE; i++) {
+			for (int j = 0; j < BOARDSIZE; j++) {
+				gap[i][j] = new JPanel(); //create a jpanel in the current spot
 				
-				// Setting button only at the end and not using other space for the button
-				// or it will only add the blank space
+				//the last spot is reserved for the auto button
 				if (i == 9 && j == 9) {
-					auto = new JButton();
-					auto.setText("Auto");
-					add(auto);
-					auto.addActionListener(autoHandler);
-					// I need to work on this part that if the player clicks the button there should be changes
-					// in the user board panel and the ships should be on the board.
-					auto.setActionCommand("automatic");
+					auto = new JButton(); //create the button
+					auto.setText("Auto"); //set the text, although the button is too small and it will not display
+					add(auto); //add to the grid layout
+					auto.addActionListener(autoHandler); //add action listener to auto button
+					auto.setActionCommand("automatic"); //set the button command
 				}
 				else {
-					add(gap[i][j]);
+					add(gap[i][j]); //add the panel
 				}
 			}
 		}
 		
-		// User board with 100 test area.
-		userBoard = new JLabel[10][10];
-		// This is the idea to put in the view that if automatic is not selected then there are no ships 
-		// yet and we need to place the ships. Further, we can add the drag and drop and if the number of 
-		// ships are 0 left then we can make the boolean ships as true and start the game.
-		for(int i = 0; i < 10; i++) {
-			for (int j = 0; j < 10; j++) {
-				userBoard[i][j] = new JLabel();
-				userBoard[i][j].setBorder(BorderFactory.createLineBorder(Color.black));
-				add(userBoard[i][j]);
+		userBoard = new JLabel[BOARDSIZE][BOARDSIZE]; //user board with 100 spots for the ships
+		
+		//loops through and sets the user's boards settings
+		for(int i = 0; i < BOARDSIZE; i++) {
+			for (int j = 0; j < BOARDSIZE; j++) {
+				userBoard[i][j] = new JLabel(); //create a label
+				userBoard[i][j].setBorder(BorderFactory.createLineBorder(Color.black)); //outline it in black
+				add(userBoard[i][j]); //add to grid layout
 			}
 		}
 
-		model = gameModel;
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		model = gameModel; //initialize the model to the one created in the controller
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
 		setSize(300,700);
 		setVisible(true);
 	}
@@ -102,41 +107,52 @@ public class BattleshipView extends JFrame{
 		@SuppressWarnings("deprecation")
 		@Override
 		public void actionPerformed(ActionEvent event) {
-			JButton tempBtn = (JButton)event.getSource();
-			//tempBtn.setEnabled(false);
-			//check hit on enemy through network
+			JButton tempBtn = (JButton)event.getSource(); //grab the button that was pressed
 			
-			//as a temporary measure for testing, going to check hit on myself
-			//check if its a hit and act accordingly
-        	String result = model.checkHit(tempBtn.getText());
+			//once network code is implemented, result will be gathered by calling checkHit across the network
+			//send over tempBtn.getText(), receive string result
+			//this is for testing out everything in a singleplayer fashion
+        	String result = model.checkHit(tempBtn.getText()); //check the hit using the button's text
         	
-        	//if it's a hit, check if player1 won, and if they have end the game
+        	//if it's a hit, change the button to reflect so
         	if (result == "HIT") {
-        		tempBtn.setText("X");
-        		tempBtn.setForeground(Color.red);
-        		result = model.checkWinner();
+        		tempBtn.setText("X"); //set the button to say X
+        		tempBtn.setForeground(Color.red); //make the color Red
+        		result = model.checkWinner(); //check if you are out of ships
         		if (result == "YOU LOST") {
-        			DisplayResults(result);
-        			System.exit(0);
+        			DisplayResults(result); //displays that you lost
+        			//send something across network to tell opponent they won
+        			System.exit(0); //exit the program
         		}
         	}	
         	else if (result == "DUPE") {
-        		return;
+        		return; //pressing the button repeatedly will do nothing
         	}
         	else {
-        		tempBtn.setText("O");
+        		tempBtn.setText("O"); //set the button to O
+        		tempBtn.setForeground(Color.WHITE); //show the color as white (a bit hard to see, may need to fix)
         	}
 		}
 	}
 	
-	// button handler (handle) for the automatic button
+	// button handler for the automatic button
 	private class AutoButtonHandler implements ActionListener{
 		@SuppressWarnings("deprecation")
 		@Override
 		public void actionPerformed(ActionEvent event) {
 			if (event.getSource() == auto) {
-				auto.setEnabled(false);
+				auto.setEnabled(false); //dont allow to repress auto button for now
 				
+				//the program then loops through each of the 5 ships and checks if it has been placed
+				//if it has been placed, it will do nothing to it
+				//if it has not been placed, it will then generate a random number 1-3
+				//based off that number, the ships are then placed on the user's board
+				//this does lead to randomness in a way that ensures there are no conflicts, however
+				//this way of implementation makes my soul hurt, seeing so much code repeated. this is
+				//high up on the list of things i want to change to make better, but unfortunately low on the
+				//list of things that NEED to be changed. and as such it stays like this for now
+				
+				//carrier ship
 				if (!model.GetShipPlacementStatus("Carrier")) {
 					Random random = new Random();
 				    int temp = random.nextInt(4 - 1) + 1;
@@ -163,6 +179,7 @@ public class BattleshipView extends JFrame{
 				    }
 				}
 				
+				//battleship
 				if (!model.GetShipPlacementStatus("Battleship")) {
 					Random random = new Random();
 				    int temp = random.nextInt(4 - 1) + 1;
@@ -186,6 +203,7 @@ public class BattleshipView extends JFrame{
 				    }
 				}
 				
+				//cruiser
 				if (!model.GetShipPlacementStatus("Cruiser")) {
 					Random random = new Random();
 				    int temp = random.nextInt(4 - 1) + 1;
@@ -209,6 +227,7 @@ public class BattleshipView extends JFrame{
 				    }
 				}
 				
+				//submarine
 				if (!model.GetShipPlacementStatus("Submarine")) {
 					Random random = new Random();
 				    int temp = random.nextInt(4 - 1) + 1;
@@ -232,6 +251,7 @@ public class BattleshipView extends JFrame{
 				    }
 				}
 				
+				//destroyer
 				if (!model.GetShipPlacementStatus("Destroyer")) {
 					Random random = new Random();
 				    int temp = random.nextInt(4 - 1) + 1;
@@ -249,12 +269,20 @@ public class BattleshipView extends JFrame{
 				    	String[] placeMyDestroyer = {"I10", "J10"};
 				    	model.PlaceDestroyerShip(placeMyDestroyer);
 				    	userBoard[8][9].setText("De"); userBoard[9][9].setText("De"); 
-				    }
+				    }//end else
+				}//end if destroyer
+				
+				//loop through the enemy board and set enabled to true so they can start trying to hit ships
+				for (int i = 0; i < BOARDSIZE; i++) {
+					for (int j = 0; j < BOARDSIZE; j++) {
+						enemyBoard[i][j].setEnabled(true);
+					}
 				}
-			}
-		}
-	}
+			}//end if get source auto
+		}//end action performed method
+	}//end autobutton class 
 	
+	//display the results in a new window that when closed closes the entire program
 	public void DisplayResults(String resultMessage) {
 		JOptionPane.showMessageDialog(this, resultMessage);
 	}
