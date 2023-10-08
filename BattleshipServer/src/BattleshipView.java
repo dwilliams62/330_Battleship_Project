@@ -33,7 +33,7 @@ public class BattleshipView extends JFrame{
 	
 	//constructor
 	BattleshipView(BattleshipModel gameModel){
-		super("Battleship Game Client"); // title bar
+		super("BattleShip Game Server"); // title bar
 		
 		setLayout(new GridLayout(GRIDLAYOUTSIZE,GRIDLAYOUTSIZE)); // grid layout is 30 by 30
 		
@@ -102,7 +102,6 @@ public class BattleshipView extends JFrame{
 		setVisible(true);
 	}
 	
-	//register the controller so the view can tell controller it is ready to send data
 	public void registerController(BattleshipController cont) {
 		controller = cont;
 	}
@@ -278,8 +277,6 @@ public class BattleshipView extends JFrame{
 						enemyBoard[i][j].setEnabled(true);
 					}
 				}
-
-				controller.WaitForMessage(); //client will go second and will wait for server to start
 			}//end if get source auto
 		}//end action performed method
 	}//end autobutton class 
