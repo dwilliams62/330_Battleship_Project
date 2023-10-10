@@ -278,8 +278,10 @@ public class BattleshipView extends JFrame{
 						enemyBoard[i][j].setEnabled(true);
 					}
 				}
-
-				controller.WaitForMessage(); //client will go second and will wait for server to start
+				
+				if (!controller.GetIsServer()) {
+					controller.WaitForMessage(); //client will go second and will wait for server to start
+				}
 			}//end if get source auto
 		}//end action performed method
 	}//end autobutton class 
@@ -287,6 +289,7 @@ public class BattleshipView extends JFrame{
 	//display the results in a new window that when closed closes the entire program
 	public void DisplayResults(String resultMessage) {
 		JOptionPane.showMessageDialog(this, resultMessage);
+		controller.CloseConnection();
 		System.exit(0);
 	}
 }

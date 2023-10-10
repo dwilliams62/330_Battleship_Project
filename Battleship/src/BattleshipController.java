@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 import javax.swing.JFrame;
@@ -19,16 +20,69 @@ public class BattleshipController {
     private ObjectInputStream input; // input stream from server
     private String message = ""; // message from server
     private static String chatServer; // host server for this application
-    Socket client; // socket to communicate with server
+	private ServerSocket server; // server socket
+	private Socket connection; // connection to client
+	private boolean isServer = true;
     
     private BattleshipModel model; //hold the model to communicate with it
     private BattleshipView view; //hold the view to communicate with it
+    
+    public static void main(String[] args) {
+		String host;
+	    if (args.length == 0) {
+	    	host = "127.0.0.1";
+	    }
+	    else {
+	    	host = args[0];
+	    }
+	    
+		//start the games view with a made model
+		BattleshipModel gameModel = new BattleshipModel();
+		BattleshipView gameView = new BattleshipView(gameModel);
+		BattleshipController gameController = new BattleshipController(gameModel, gameView, host);
+		gameView.registerController(gameController);
+		
+		if (args.length == 0) {
+			gameController.SetIsServer(true);
+			gameController.RunServer();
+		}
+		else {
+			gameController.SetIsServer(false);
+			gameController.RunClient();
+		}
+	}
     
 	BattleshipController(BattleshipModel model, BattleshipView view, String host) {
 		//start the games view with a made model and set the host ip
 		this.model = model;
 		this.view = view;
 		chatServer = host;
+	}
+	
+	public void RunServer() {
+		try {
+			System.out.println("Creating server");
+			server = new ServerSocket(12345, 100);
+			System.out.println("Waiting For Connection");
+			WaitForConnection();
+			System.out.println("Connected");
+			GetStreams();
+		}
+		catch (EOFException eofException) {
+			view.DisplayResults("Server Terminated Connection");
+		}
+		catch (IOException ioException) {
+			ioException.printStackTrace();
+		}
+	}
+	
+	private void WaitForConnection() {
+		try {
+			connection = server.accept();
+		}
+		catch (IOException ioException){
+			view.DisplayResults("IO Error WaitForConnection");
+		}
 	}
 	
 	//starts the client
@@ -46,14 +100,13 @@ public class BattleshipController {
 	}
 	
 	private void ConnectToServer() throws IOException {
-		client = new Socket( InetAddress.getByName( chatServer ), 12345 ); //connect to the server socket
+		connection = new Socket( InetAddress.getByName( chatServer ), 12345 ); //connect to the server socket
 	}
 	
 	private void GetStreams() throws IOException {
-		//initialize the streams for the client
-	    output = new ObjectOutputStream( client.getOutputStream() );      
+		output = new ObjectOutputStream( connection.getOutputStream() );      
 	    output.flush();
-	    input = new ObjectInputStream( client.getInputStream() );
+	    input = new ObjectInputStream( connection.getInputStream() );
 	}
 	
 	public String SendMessage(String msg){
@@ -130,16 +183,24 @@ public class BattleshipController {
 	}
 
 	
-	private void CloseConnection() {
+	public void CloseConnection() {
 	      try 
 	      {
 	         output.close(); // close output stream
 	         input.close(); // close input stream
-	         client.close(); // close socket
+	         connection.close(); // close socket
 	      } // end try
 	      catch ( IOException ioException ) 
 	      {
 	         ioException.printStackTrace();
 	      } // end catch
+	}
+	
+	public void SetIsServer(boolean serv) {
+		isServer = serv;
+	}
+	
+	public boolean GetIsServer() {
+		return isServer;
 	}
 }
