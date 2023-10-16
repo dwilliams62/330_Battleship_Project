@@ -3,39 +3,61 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Random;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
-import javax.imageio.ImageIO;
+import javax.imageio.*;
 import javax.swing.*;
 import javax.swing.text.html.ImageView;
-
-//ImageIcon icon = new ImageIcon("Wave2.png");
-//userBoard[0][0].setIcon(icon);
-//code to retroactively change the image on a jlabel
 
 public class BattleshipView extends JFrame{
 	private JButton [][] enemyBoard; //Enemy Board at top
 	private JLabel [][] userBoard; //User board at bottom
-	private JPanel [][] gap; // space in between to interact with player
+	private JLabel [] interactBoard;
+	private JLabel carrierShip; // space in between to interact with player
+	private JLabel battleShip;
+	private JLabel cruiserShip;
+	private JLabel submarineShip;
+	private JLabel destroyerShip;
 	private JButton auto; // automatic button to place ships
+	private static int points = 17;
 	private BattleshipModel model; // using model
 	private BattleshipController controller; //using controller
 	ImageIcon buttonIcon = new ImageIcon("Wave2.png"); // importing image
+	ImageIcon carrierShipImg = new ImageIcon("CarrierFull1.png");
+	ImageIcon battleShipImg = new ImageIcon("BattleshipFull1.png");
+	ImageIcon cruiserShipImg = new ImageIcon("CruiserFull1.png");
+	ImageIcon submarineShipImg = new ImageIcon("SubmarineFull1.png");
+	ImageIcon destroyerShipImg = new ImageIcon("DestroyerFull1.png");
 	
-	private static int GRIDLAYOUTSIZE = 30; //used in grid layout size
+	
+	private static int BOARDGRIDLAYOUTSIZE = 10; //used in grid layout size
 	private static int BOARDSIZE = 10; //constant for board size
+	private static int INTERACTGRIDLAYOUTROW = 2;
+	private static int INTERACTGRIDLAYOUTCOLUMN = 3;
+	
 	
 	//constructor
 	BattleshipView(BattleshipModel gameModel){
-		super("Battleship Game Client"); // title bar
+		JFrame frame = new JFrame();
+		frame.setTitle("Battleship Game Server");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
+		frame.setSize(300,700);
+		frame.setLayout(new GridLayout(3,0));
 		
-		setLayout(new GridLayout(GRIDLAYOUTSIZE,GRIDLAYOUTSIZE)); // grid layout is 30 by 30
+		JPanel enemyPanel = new JPanel();
+		enemyPanel.setLayout(new GridLayout(BOARDGRIDLAYOUTSIZE,BOARDGRIDLAYOUTSIZE)); // grid layout is 30 by 30
+		//enemyPanel.setBounds(0,0,0,0);
 		
 		enemyBoard = new JButton[BOARDSIZE][BOARDSIZE]; // 100 buttons for enemy board ( 10 * 10)
 		EnemyButtonHandler enemyHandler = new EnemyButtonHandler(); // button handler
@@ -54,37 +76,62 @@ public class BattleshipView extends JFrame{
 				enemyBoard[i][j].setVerticalTextPosition(JButton.CENTER); //centers the text
 				enemyBoard[i][j].setMargin(new Insets(0,0,0,0)); //allows image to fill entire button
 				
-				add(enemyBoard[i][j]); //add button to the grid layout
 				enemyBoard[i][j].addActionListener(enemyHandler); //attach a listener
+				enemyPanel.add(enemyBoard[i][j]); //add button to the grid layout
 				number++;
 			}
 			letter++;
 			number = 1;
 		}
 		
+		JPanel userInteractPanel = new JPanel();
+		userInteractPanel.setLayout(new GridLayout(INTERACTGRIDLAYOUTROW, INTERACTGRIDLAYOUTCOLUMN)); // grid layout is 30 by 30
+		//gapPanel.setBounds(1,1,1,1);
+		interactBoard = new JLabel[5];
 		AutoButtonHandler autoHandler = new AutoButtonHandler(); // This is for automatic placement
-		gap = new JPanel[BOARDSIZE][BOARDSIZE]; // 100 element space
+		ClickListener clickListener = new ClickListener();
+		this.addMouseListener(clickListener);
+		DragListener dragListener = new DragListener();
+		this.addMouseMotionListener(dragListener);
 		
-		//loops through 100 spots to create a gap between the boards
-		//eventually the ships for drag and drop will be here
-		for(int i = 0; i < BOARDSIZE; i++) {
-			for (int j = 0; j < BOARDSIZE; j++) {
-				gap[i][j] = new JPanel(); //create a jpanel in the current spot
-				
-				//the last spot is reserved for the auto button
-				if (i == 9 && j == 9) {
-					auto = new JButton(); //create the button
-					auto.setText("Auto"); //set the text, although the button is too small and it will not display
-					add(auto); //add to the grid layout
-					auto.addActionListener(autoHandler); //add action listener to auto button
-					auto.setActionCommand("automatic"); //set the button command
-				}
-				else {
-					add(gap[i][j]); //add the panel
-				}
+		//carrierShip = new JLabel(carrierShipImg);
+		//battleShip = new JLabel(battleShipImg);
+		//cruiserShip = new JLabel(cruiserShipImg);
+		//submarineShip = new JLabel(submarineShipImg);
+		//destroyerShip = new JLabel(destroyerShipImg);
+		
+		for (int i = 0; i < 5; i++) {
+			interactBoard[i] = new JLabel();
+			if (i == 0) {
+				interactBoard[i] = new JLabel(carrierShipImg);
 			}
+			else if (i == 1) {
+				interactBoard[i] = new JLabel(battleShipImg);
+			}
+			else if (i == 2) {
+				interactBoard[i] = new JLabel(cruiserShipImg);
+			}
+			else if (i == 3) {
+				interactBoard[i] = new JLabel(submarineShipImg);
+			}
+			else{
+				interactBoard[i] = new JLabel(destroyerShipImg);
+			}
+			
+			userInteractPanel.add(interactBoard[i]);
+			userInteractPanel.setBackground(Color.WHITE);
 		}
 		
+		auto = new JButton(); //create the button
+		auto.setText("Auto"); //set the text, although the button is too small and it will not display
+		
+		userInteractPanel.add(auto); //add to the grid layout
+		auto.addActionListener(autoHandler); //add action listener to auto button
+		auto.setActionCommand("automatic");
+		
+		JPanel userPanel = new JPanel();
+		userPanel.setLayout(new GridLayout(BOARDGRIDLAYOUTSIZE,BOARDGRIDLAYOUTSIZE)); // grid layout is 30 by 30
+		//userPanel.setBounds(1,1,1,1);
 		userBoard = new JLabel[BOARDSIZE][BOARDSIZE]; //user board with 100 spots for the ships
 		
 		//loops through and sets the user's boards settings
@@ -92,14 +139,16 @@ public class BattleshipView extends JFrame{
 			for (int j = 0; j < BOARDSIZE; j++) {
 				userBoard[i][j] = new JLabel(); //create a label
 				userBoard[i][j].setBorder(BorderFactory.createLineBorder(Color.black)); //outline it in black
-				add(userBoard[i][j]); //add to grid layout
+				userPanel.add(userBoard[i][j]); //add to grid layout
 			}
 		}
 
 		model = gameModel; //initialize the model to the one created in the controller
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-		setSize(300,700);
-		setVisible(true);
+		frame.add(enemyPanel);
+		frame.add(userInteractPanel);
+		frame.add(userPanel);
+		frame.setVisible(true);
+		
 	}
 	
 	//register the controller so the view can tell controller it is ready to send data
@@ -120,6 +169,7 @@ public class BattleshipView extends JFrame{
         	if (result.equals("HIT")) {
         		tempBtn.setText("X"); //set the button to say X
         		tempBtn.setForeground(Color.red); //make the color Red
+        		points--;
         	}	
         	else if (result.equals("DUPE")) {
         		return; //pressing the button repeatedly will do nothing
@@ -142,6 +192,13 @@ public class BattleshipView extends JFrame{
 		public void actionPerformed(ActionEvent event) {
 			if (event.getSource() == auto) {
 				auto.setEnabled(false); //dont allow to repress auto button for now
+				
+				for (int i = 0; i < 5; i++) {
+						interactBoard[i].setIcon(null);
+					if (i == 1) {
+						interactBoard[i].setText("<html>Points <br/> Remaining: " + Integer.toString(points) + "</html>");
+						}
+				}
 				
 				//the program then loops through each of the 5 ships and checks if it has been placed
 				//if it has been placed, it will do nothing to it
@@ -279,12 +336,30 @@ public class BattleshipView extends JFrame{
 					}
 				}
 				
+				
 				if (!controller.GetIsServer()) {
 					controller.WaitForMessage(); //client will go second and will wait for server to start
 				}
 			}//end if get source auto
 		}//end action performed method
 	}//end autobutton class 
+	
+	private class ClickListener extends MouseAdapter{
+		public void mousePressed(MouseEvent event) {
+			//destroyerShipImg = event.getPoint();
+		}	
+	}
+    private class DragListener extends MouseMotionAdapter{
+    	public void mouseDragged(MouseEvent event) {
+    		//Point currPoint = event.getPoint();
+    		//int dx = (int) (currPoint.getX() - prevPoint.getX());
+    		//int dy = (int) (currPoint.getY() - prevPoint.getY());
+    		
+    		//imageUpperLeft.translate(dx, dy);
+    		//prevPoint = currPoint;
+    		//repaint();  		
+    	}
+    }
 	
 	//display the results in a new window that when closed closes the entire program
 	public void DisplayResults(String resultMessage) {
