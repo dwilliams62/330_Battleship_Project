@@ -17,6 +17,12 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 
 import javax.imageio.*;
+import java.io.File;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 import javax.swing.text.html.ImageView;
 
@@ -30,16 +36,27 @@ public class BattleshipView extends JFrame{
 	private JLabel submarineShip;
 	private JLabel destroyerShip;
 	private JButton auto; // automatic button to place ships
-	private static int points = 17;
+	
 	private BattleshipModel model; // using model
 	private BattleshipController controller; //using controller
-	ImageIcon buttonIcon = new ImageIcon("Wave2.png"); // importing image
-	ImageIcon carrierShipImg = new ImageIcon("CarrierFull1.png");
-	ImageIcon battleShipImg = new ImageIcon("BattleshipFull1.png");
-	ImageIcon cruiserShipImg = new ImageIcon("CruiserFull1.png");
-	ImageIcon submarineShipImg = new ImageIcon("SubmarineFull1.png");
-	ImageIcon destroyerShipImg = new ImageIcon("DestroyerFull1.png");
 	
+	private ImageIcon buttonIcon; // importing image
+	private ImageIcon carrierShipImg;
+	private ImageIcon battleShipImg;
+	private ImageIcon cruiserShipImg;
+	private ImageIcon submarineShipImg;
+	private ImageIcon destroyerShipImg;
+	
+	private AudioInputStream splashNoise;
+	private AudioInputStream explosionNoise;
+	private AudioInputStream startNoise;
+	private AudioInputStream winNoise;
+	private AudioInputStream loseNoise;
+	private Clip splashClip;
+	private Clip explosionClip;
+	private Clip startClip;
+	private Clip winClip;
+	private Clip loseClip;
 	
 	private static int BOARDGRIDLAYOUTSIZE = 10; //used in grid layout size
 	private static int BOARDSIZE = 10; //constant for board size
@@ -48,9 +65,47 @@ public class BattleshipView extends JFrame{
 	
 	
 	//constructor
-	BattleshipView(BattleshipModel gameModel){
+	BattleshipView(BattleshipModel gameModel){		
+		try {
+			buttonIcon = new ImageIcon("Wave2.png"); // importing image
+			carrierShipImg = new ImageIcon("CarrierFull1.png");
+			battleShipImg = new ImageIcon("BattleshipFull1.png");
+			cruiserShipImg = new ImageIcon("CruiserFull1.png");
+			submarineShipImg = new ImageIcon("SubmarineFull1.png");
+			destroyerShipImg = new ImageIcon("DestroyerFull1.png");
+			
+			splashNoise = AudioSystem.getAudioInputStream(new File("Splish.wav").getAbsoluteFile());
+			splashClip = AudioSystem.getClip();
+			splashClip.open(splashNoise);
+			
+			explosionNoise = AudioSystem.getAudioInputStream(new File("Explosion1.wav").getAbsoluteFile());
+			explosionClip = AudioSystem.getClip();
+			explosionClip.open(explosionNoise);
+			
+			startNoise = AudioSystem.getAudioInputStream(new File("GameStart.wav").getAbsoluteFile());
+			startClip = AudioSystem.getClip();
+			startClip.open(startNoise);
+			
+			winNoise = AudioSystem.getAudioInputStream(new File("Win.wav").getAbsoluteFile());
+			winClip = AudioSystem.getClip();
+			winClip.open(winNoise);
+			
+			loseNoise = AudioSystem.getAudioInputStream(new File("Lose.wav").getAbsoluteFile());
+			loseClip = AudioSystem.getClip();
+			loseClip.open(loseNoise);
+		}
+		catch (IOException ioException) {
+			this.DisplayResults("IOException in creating sounds/images");
+		}
+		catch (UnsupportedAudioFileException uAFE) {
+			this.DisplayResults("Unsupport File Type for Sound");
+		}
+		catch (LineUnavailableException lUE) {
+			this.DisplayResults("Error!!!");
+		}
+		
 		JFrame frame = new JFrame();
-		frame.setTitle("Battleship Game Server");
+		frame.setTitle("Battleship Game");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
 		frame.setSize(300,700);
 		frame.setLayout(new GridLayout(3,0));
@@ -149,6 +204,15 @@ public class BattleshipView extends JFrame{
 		frame.add(userPanel);
 		frame.setVisible(true);
 		
+		startClip.stop();
+		startClip.setFramePosition(0);
+		startClip.start();
+		
+	}//end constructor
+	
+	//update the health text object created after ships are placed
+	public void updateHealth() {
+		interactBoard[1].setText("<html>Health <br/> Remaining: " + model.getCurrentHealth()+ "</html>");
 	}
 	
 	//register the controller so the view can tell controller it is ready to send data
@@ -169,7 +233,9 @@ public class BattleshipView extends JFrame{
         	if (result.equals("HIT")) {
         		tempBtn.setText("X"); //set the button to say X
         		tempBtn.setForeground(Color.red); //make the color Red
-        		points--;
+        		explosionClip.stop();
+        		explosionClip.setFramePosition(0);
+        		explosionClip.start();
         	}	
         	else if (result.equals("DUPE")) {
         		return; //pressing the button repeatedly will do nothing
@@ -177,6 +243,9 @@ public class BattleshipView extends JFrame{
         	else {
         		tempBtn.setText("O"); //set the button to O
         		tempBtn.setForeground(Color.WHITE); //show the color as white (a bit hard to see, may need to fix)
+        		splashClip.stop();
+        		splashClip.setFramePosition(0);
+        		splashClip.start();
         	}
         	
         	controller.WaitForMessage(); //now the program waits for the other to send data
@@ -193,10 +262,11 @@ public class BattleshipView extends JFrame{
 			if (event.getSource() == auto) {
 				auto.setEnabled(false); //dont allow to repress auto button for now
 				
+				//change the middle panels to reflect new data
 				for (int i = 0; i < 5; i++) {
 						interactBoard[i].setIcon(null);
-					if (i == 1) {
-						interactBoard[i].setText("<html>Points <br/> Remaining: " + Integer.toString(points) + "</html>");
+					if (i == 1) { //set the current hp in the top middle text box
+						interactBoard[i].setText("<html>Health <br/> Remaining: " + model.getCurrentHealth()+ "</html>");
 						}
 				}
 				
@@ -363,6 +433,16 @@ public class BattleshipView extends JFrame{
 	
 	//display the results in a new window that when closed closes the entire program
 	public void DisplayResults(String resultMessage) {
+		if (resultMessage.equals("YOU WON")) {
+    		winClip.stop();
+    		winClip.setFramePosition(0);
+    		winClip.start();
+		}
+		else if (resultMessage.equals("YOU LOST")) {
+    		loseClip.stop();
+    		loseClip.setFramePosition(0);
+    		loseClip.start();
+		}
 		JOptionPane.showMessageDialog(this, resultMessage);
 		controller.CloseConnection();
 		System.exit(0);

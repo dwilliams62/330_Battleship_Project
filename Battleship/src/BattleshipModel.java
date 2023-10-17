@@ -239,4 +239,8 @@ public class BattleshipModel {
     		return "";
     	}
     }
+    
+    public int getCurrentHealth() {
+    	return 17 - oppTotalHits;
+    }
 }

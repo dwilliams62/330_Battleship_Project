@@ -27,7 +27,7 @@ public class BattleshipController {
     private BattleshipModel model; //hold the model to communicate with it
     private BattleshipView view; //hold the view to communicate with it
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException{
 		String host;
 	    if (args.length == 0) {
 	    	host = "127.0.0.1";
@@ -152,8 +152,9 @@ public class BattleshipController {
 			view.DisplayResults("IOException in ProcessConnection");
 		}
 		
-		//then will check if it is a hit or miss
+		//then will check if it is a hit or miss, and update the remaining health
 		String result = model.checkHit(message);
+		view.updateHealth();
 		
 		//if you lost due to that hit, you'll send to the opponent that they won and then show your loss message
 		if (result.equals("HIT")) {
