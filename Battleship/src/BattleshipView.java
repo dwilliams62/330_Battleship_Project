@@ -303,7 +303,11 @@ public class BattleshipView extends JFrame{
 	
 	//update the health text object created after ships are placed
 	public void updateHealth() {
-		interactBoard[1].setText("<html>Health <br/> Remaining: " + model.getCurrentHealth()+ "</html>");
+		interactBoard[0].setText("<html>Carrier <br/> Remaining: " + model.GetCarrierStatus()+ "</html>");
+		interactBoard[1].setText("<html>Battleship <br/> Remaining: " + model.GetBattleshipStatus()+ "</html>");
+		interactBoard[2].setText("<html>Cruiser <br/> Remaining: " + model.GetCruiserStatus()+ "</html>");
+		interactBoard[3].setText("<html>Submarine <br/> Remaining: " + model.GetSubmarineStatus()+ "</html>");
+		interactBoard[4].setText("<html>Destroyer <br/> Remaining: " + model.GetDestroyerStatus()+ "</html>");
 	}
 	
 	//register the controller so the view can tell controller it is ready to send data
@@ -324,10 +328,10 @@ public class BattleshipView extends JFrame{
         	if (result.equals("HIT")) {
         		tempBtn.setText("X"); //set the button to say X
         		tempBtn.setForeground(Color.red); //make the color Red
- /*       		explosionClip.stop();
+        		explosionClip.stop();
         		explosionClip.setFramePosition(0);
         		explosionClip.start();
- */	       	}	
+	       	}	
         	else if (result.equals("DUPE")) {
         		return; //pressing the button repeatedly will do nothing
         	}
@@ -356,10 +360,8 @@ public class BattleshipView extends JFrame{
 				//change the middle panels to reflect new data
 				for (int i = 0; i < SHIPS; i++) {
 						interactBoard[i].setIcon(null);
-					if (i == 1) { //set the current hp in the top middle text box
-						interactBoard[i].setText("<html>Health <br/> Remaining: " + model.getCurrentHealth()+ "</html>");
-						}
 				}
+				updateHealth();
 				
 				//the program then loops through each of the 5 ships and checks if it has been placed
 				//if it has been placed, it will do nothing to it
